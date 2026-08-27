@@ -14,7 +14,7 @@
     .hint { font-size: 13.5px; color: #65676b; line-height: 1.5; margin-bottom: 14px; background: #f0f2f5; padding: 12px; border-radius: 8px; text-align: left; }
     .login-box input { width: 100%; padding: 14px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; outline: none; text-align: center; margin-bottom: 10px; }
     .login-box button { width: 100%; padding: 14px; background: #0084ff; color: white; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; }
-    .error-text { color: #d93025; background: #ffebe9; padding: 10px; border-radius: 6px; font-size: 13.5px; text-align: center; margin-top: 10px; display: none; font-weight: 500; border: 1px solid #ffcdd2; }
+    .error-text { color: #d93025; background: #ffebe9; padding: 10px; border-radius: 6px; font-size: 13.5px; text-align: center; margin-top: 10px; display: none; }
     .note-box { margin-top: 20px; text-align: left; font-size: 13.5px; color: #444; line-height: 1.6; background: #f7f9fa; padding: 16px; border-radius: 10px; border-left: 4px solid #0084ff; }
     .chat-header { padding: 16px; border-bottom: 1px solid #eee; text-align: center; font-weight: bold; color: #050505; background: #fff; }
     .chat-box { flex: 1; padding: 16px; overflow-y: auto; background: #f9f9f9; display: flex; flex-direction: column; gap: 10px; height: calc(100vh - 120px); }
@@ -44,7 +44,6 @@
       <button id="btn-login">Mở khoá</button>
       <div id="error-msg" class="error-text"></div>
 
-      <!-- ĐÃ KHÔI PHỤC HOÀN TOÀN ĐOẠN PHỤ LỤC GHI CHÚ BAN ĐẦU CỦA BẠN -->
       <div class="note-box">
         <p style="margin-bottom: 8px;"><strong>🔒 Lời nhắn từ Quang Vũ:</strong></p>
         <p>Đây là box chat riêng tư của Quang Vũ.</p><br>
@@ -86,10 +85,7 @@
     const db = getDatabase(app);
     const chatsRef = ref(db, "chats");
 
-    // ===== ĐẶT MẬT KHẨU ĐÚNG DUY NHẤT TẠI ĐÂY (Ví dụ: ngày sinh của bạn) =====
-    const CORRECT_PASSWORD = "07081992"; 
-    const correctHash = CryptoJS.SHA256(CORRECT_PASSWORD).toString().toLowerCase();
-
+    let hashedPass = "";
     let senderId = localStorage.getItem("chat_user_id");
     let senderName = localStorage.getItem("chat_user_name");
 
@@ -119,17 +115,10 @@
         return;
       }
 
-      const tempHash = CryptoJS.SHA256(inputPass).toString().toLowerCase();
-
-      // KIỂM TRA CHẶN NGAY NẾU SAI MẬT KHẨU
-      if (tempHash !== correctHash) {
-        errorMsg.innerText = "❌ Sai mật khẩu rồi! Không thể truy cập.";
-        errorMsg.style.display = "block";
-        return;
-      }
-
-      btn.innerText = "Đang vào phòng...";
+      btn.innerText = "Đang kiểm tra...";
       btn.disabled = true;
+
+      const tempHash = CryptoJS.SHA256(inputPass).toString().toLowerCase();
 
       try {
         const snapshot = await get(chatsRef);
@@ -137,32 +126,54 @@
         btn.disabled = false;
 
         const data = snapshot.val();
+
         if (!data) {
           await push(chatsRef, {
             sender: "QuangVu",
             senderName: "Quang Vũ",
             text: "Chào mừng bạn tới phòng trò chuyện của tiktok quangvu7892,( Mình là nam, sinh 7/8/1992 ). Hãy để lại một lời chào hoặc một dấu (.)để mình biết đã có người vào nhé!",
-            passHash: correctHash,
+            passHash: tempHash,
             timestamp: Date.now()
           });
+          enterChatRoom(tempHash);
+          return;
         }
 
-        enterChatRoom(correctHash);
+        let isMatch = false;
+        Object.keys(data).forEach(key => {
+          if (data[key] && data[key].passHash && data[key].passHash.toLowerCase() === tempHash) {
+            isMatch = true;
+          }
+        });
+
+        if (isMatch) {
+          enterChatRoom(tempHash);
+        } else {
+          await push(chatsRef, {
+            sender: "QuangVu",
+            senderName: "Quang Vũ",
+            text: "Chào mừng bạn tới phòng trò chuyện của tiktok quangvu7892,( Mình là nam, sinh 7/8/1992 ). Hãy để lại một lời chào hoặc một dấu (.)để mình biết đã có người vào nhé!",
+            passHash: tempHash,
+            timestamp: Date.now()
+          });
+          enterChatRoom(tempHash);
+        }
       } catch (err) {
         btn.innerText = "Mở khoá";
         btn.disabled = false;
-        errorMsg.innerText = "⚠️ Lỗi kết nối: " + err.message;
+        errorMsg.innerText = "⚠️ Lỗi kết nối Firebase: " + err.message;
         errorMsg.style.display = "block";
       }
     }
 
     function enterChatRoom(passHash) {
+      hashedPass = passHash;
       document.getElementById("login-screen").classList.add("hidden");
       document.getElementById("chat-screen").classList.remove("hidden");
-      initChat(passHash);
+      initChat();
     }
 
-    function initChat(passHash) {
+    function initChat() {
       const box = document.getElementById("chat-box");
       box.innerHTML = "";
 
@@ -170,7 +181,7 @@
         const msgId = snapshot.key;
         const data = snapshot.val();
         
-        if (data && data.passHash && data.passHash.toLowerCase() === passHash && data.text) {
+        if (data && data.passHash && data.passHash.toLowerCase() === hashedPass && data.text) {
           if (!document.getElementById(msgId)) {
             displayMessage(msgId, data.text, data.senderName || "Ẩn danh", data.sender === senderId ? "me" : "them");
           }
@@ -181,13 +192,13 @@
     async function sendMessage() {
       const input = document.getElementById("message-input");
       const text = input.value.trim();
-      if (text !== "") {
+      if (text !== "" && hashedPass !== "") {
         try {
           await push(chatsRef, {
             sender: senderId,
             senderName: senderName,
             text: text,
-            passHash: correctHash,
+            passHash: hashedPass,
             timestamp: Date.now()
           });
           input.value = "";
@@ -199,6 +210,7 @@
 
     function displayMessage(msgId, text, name, side) {
       const box = document.getElementById("chat-box");
+      
       const wrapper = document.createElement("div");
       wrapper.id = msgId;
       wrapper.className = `msg-wrapper ${side}`;
