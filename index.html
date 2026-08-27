@@ -13,8 +13,11 @@
     .login-box h2 { font-size: 19px; color: #1c1e21; margin-bottom: 14px; text-align: center; }
     .hint { font-size: 13.5px; color: #65676b; line-height: 1.5; margin-bottom: 14px; background: #f0f2f5; padding: 12px; border-radius: 8px; text-align: left; }
     .login-box input { width: 100%; padding: 14px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; outline: none; text-align: center; margin-bottom: 10px; }
-    .login-box button { width: 100%; padding: 14px; background: #0084ff; color: white; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; }
+    .login-box button { width: 100%; padding: 13px; font-size: 15px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 8px; }
+    #btn-login { background: #0084ff; color: white; }
+    #btn-create { background: #e4e6eb; color: #050505; }
     .error-text { color: #d93025; background: #ffebe9; padding: 10px; border-radius: 6px; font-size: 13.5px; text-align: center; margin-top: 10px; display: none; font-weight: 500; border: 1px solid #ffcdd2; }
+    .success-text { color: #0b8043; background: #e6f4ea; padding: 10px; border-radius: 6px; font-size: 13.5px; text-align: center; margin-top: 10px; display: none; font-weight: 500; border: 1px solid #ceead6; }
     .note-box { margin-top: 20px; text-align: left; font-size: 13.5px; color: #444; line-height: 1.6; background: #f7f9fa; padding: 16px; border-radius: 10px; border-left: 4px solid #0084ff; }
     .chat-header { padding: 16px; border-bottom: 1px solid #eee; text-align: center; font-weight: bold; color: #050505; background: #fff; }
     .chat-box { flex: 1; padding: 16px; overflow-y: auto; background: #f9f9f9; display: flex; flex-direction: column; gap: 10px; height: calc(100vh - 120px); }
@@ -41,9 +44,15 @@
         <i>Ví dụ: ngày 05 tháng 06 năm 2026 ➔ mật khẩu là 05062026</i>
       </div>
       <input type="password" id="password-input" placeholder="Nhập mật khẩu...">
-      <button id="btn-login">Mở khoá</button>
-      <div id="error-msg" class="error-text"></div>
+      
+      <!-- Tách thành 2 nút rõ ràng để không bị kẹt -->
+      <button id="btn-login">Mở khoá vào phòng</button>
+      <button id="btn-create">Tạo mật khẩu mới này (Dành cho chủ phòng)</button>
 
+      <div id="error-msg" class="error-text"></div>
+      <div id="success-msg" class="success-text"></div>
+
+      <!-- PHẦN GHI CHÚ GIỮ NGUYÊN HOÀN TOÀN TỪ ĐẦU TỚI CUỐI -->
       <div class="note-box">
         <p style="margin-bottom: 8px;"><strong>🔒 Lời nhắn từ Quang Vũ:</strong></p>
         <p>Đây là box chat riêng tư của Quang Vũ.</p><br>
@@ -97,17 +106,20 @@
     }
 
     document.getElementById("btn-login").addEventListener("click", checkPassword);
+    document.getElementById("btn-create").addEventListener("click", createPassword);
     document.getElementById("password-input").addEventListener("keypress", (e) => { if(e.key === 'Enter') checkPassword(); });
     document.getElementById("btn-send").addEventListener("click", sendMessage);
     document.getElementById("message-input").addEventListener("keypress", (e) => { if(e.key === 'Enter') sendMessage(); });
 
+    // NÚT 1: ĐĂNG NHẬP VÀO PHÒNG
     async function checkPassword() {
-      const btn = document.getElementById("btn-login");
       const errorMsg = document.getElementById("error-msg");
+      const successMsg = document.getElementById("success-msg");
       let inputPass = document.getElementById("password-input").value;
       
       inputPass = inputPass.trim().replace(/\s+/g, '').toLowerCase();
       errorMsg.style.display = "none";
+      successMsg.style.display = "none";
 
       if (!inputPass) {
         errorMsg.innerText = "⚠️ Vui lòng nhập mật khẩu!";
@@ -115,27 +127,15 @@
         return;
       }
 
-      btn.innerText = "Đang kiểm tra...";
-      btn.disabled = true;
-
       const tempHash = CryptoJS.SHA256(inputPass).toString().toLowerCase();
 
       try {
         const snapshot = await get(chatsRef);
-        btn.innerText = "Mở khoá";
-        btn.disabled = false;
-
         const data = snapshot.val();
 
         if (!data) {
-          await push(chatsRef, {
-            sender: "QuangVu",
-            senderName: "Quang Vũ",
-            text: "Chào mừng bạn tới phòng trò chuyện của tiktok quangvu7892,( Mình là nam, sinh 7/8/1992 ). Hãy để lại một lời chào hoặc một dấu (.)để mình biết đã có người vào nhé!",
-            passHash: tempHash,
-            timestamp: Date.now()
-          });
-          enterChatRoom(tempHash);
+          errorMsg.innerText = "❌ Chưa có mật khẩu nào được tạo! Hãy bấm nút 'Tạo mật khẩu mới'.";
+          errorMsg.style.display = "block";
           return;
         }
 
@@ -153,9 +153,41 @@
           errorMsg.style.display = "block";
         }
       } catch (err) {
-        btn.innerText = "Mở khoá";
-        btn.disabled = false;
         errorMsg.innerText = "⚠️ Lỗi kết nối Firebase: " + err.message;
+        errorMsg.style.display = "block";
+      }
+    }
+
+    // NÚT 2: TẠO MẬT KHẨU MỚI (Dành riêng cho bạn thiết lập)
+    async function createPassword() {
+      const errorMsg = document.getElementById("error-msg");
+      const successMsg = document.getElementById("success-msg");
+      let inputPass = document.getElementById("password-input").value;
+      
+      inputPass = inputPass.trim().replace(/\s+/g, '').toLowerCase();
+      errorMsg.style.display = "none";
+      successMsg.style.display = "none";
+
+      if (!inputPass) {
+        errorMsg.innerText = "⚠️ Vui lòng nhập mật khẩu muốn tạo vào ô trống!";
+        errorMsg.style.display = "block";
+        return;
+      }
+
+      const tempHash = CryptoJS.SHA256(inputPass).toString().toLowerCase();
+
+      try {
+        await push(chatsRef, {
+          sender: "QuangVu",
+          senderName: "Quang Vũ",
+          text: "Chào mừng bạn tới phòng trò chuyện của tiktok quangvu7892,( Mình là nam, sinh 7/8/1992 ). Hãy để lại một lời chào hoặc một dấu (.)để mình biết đã có người vào nhé!",
+          passHash: tempHash,
+          timestamp: Date.now()
+        });
+        successMsg.innerText = "✅ Tạo mật khẩu thành công! Bây giờ bạn có thể bấm 'Mở khoá vào phòng'.";
+        successMsg.style.display = "block";
+      } catch (err) {
+        errorMsg.innerText = "⚠️ Lỗi khi tạo: " + err.message;
         errorMsg.style.display = "block";
       }
     }
