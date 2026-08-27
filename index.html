@@ -7,16 +7,13 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; min-height: 100vh; }
-    .container { width: 100%; max-width: 450px; margin: 0 auto; background: #fff; min-height: 100vh; }
-    @media (min-width: 480px) { body { padding: 20px 0; } .container { min-height: 90vh; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); } }
-    .login-box { padding: 20px; width: 100%; }
-    .login-box h2 { font-size: 19px; color: #1c1e21; margin-bottom: 14px; text-align: center; }
+    .container { width: 100%; max-width: 450px; margin: 0 auto; background: #fff; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; }
+    @media (min-width: 480px) { body { padding: 20px 0; } .container { min-height: 90vh; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); justify-content: flex-start; } }
+    .login-box { padding: 24px; width: 100%; }
     .hint { font-size: 13.5px; color: #65676b; line-height: 1.5; margin-bottom: 14px; background: #f0f2f5; padding: 12px; border-radius: 8px; text-align: left; }
-    .login-box input { width: 100%; padding: 14px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; outline: none; text-align: center; margin-bottom: 10px; }
-    .login-box button { width: 100%; padding: 13px; font-size: 15px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 8px; }
-    #btn-login { background: #0084ff; color: white; }
+    .login-box input { width: 100%; padding: 14px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; outline: none; text-align: center; margin-bottom: 12px; }
+    .login-box button { width: 100%; padding: 13px; font-size: 15px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; background: #0084ff; color: white; }
     .error-text { color: #d93025; background: #ffebe9; padding: 10px; border-radius: 6px; font-size: 13.5px; text-align: center; margin-top: 10px; display: none; font-weight: 500; border: 1px solid #ffcdd2; }
-    .success-text { color: #0b8043; background: #e6f4ea; padding: 10px; border-radius: 6px; font-size: 13.5px; text-align: center; margin-top: 10px; display: none; font-weight: 500; border: 1px solid #ceead6; }
     .note-box { margin-top: 20px; text-align: left; font-size: 13.5px; color: #444; line-height: 1.6; background: #f7f9fa; padding: 16px; border-radius: 10px; border-left: 4px solid #0084ff; }
     .chat-header { padding: 16px; border-bottom: 1px solid #eee; text-align: center; font-weight: bold; color: #050505; background: #fff; }
     .chat-box { flex: 1; padding: 16px; overflow-y: auto; background: #f9f9f9; display: flex; flex-direction: column; gap: 10px; height: calc(100vh - 120px); }
@@ -37,19 +34,17 @@
 
   <div class="container">
     <div id="login-screen" class="login-box">
-      <h2>Vào phòng nhắn tin ẩn danh cùng QuangVu</h2>
+      <!-- Đã mang dòng chữ gợi ý trở lại -->
       <div class="hint">
         🔒 <b>Mật khẩu là:</b> Ngày/Tháng/Năm Sinh của bạn, viết liền ko dấu.<br><br>
-        <i>Ví dụ: ngày 05 tháng 06 năm 2026 ➔ mật khẩu là 05062026</i>
+        <i>Ví dụ: ngày 07 tháng 08 năm 1992 ➔ mật khẩu là 07081992</i>
       </div>
+
       <input type="password" id="password-input" placeholder="Nhập mật khẩu...">
-      
       <button id="btn-login">Mở khoá vào phòng</button>
 
       <div id="error-msg" class="error-text"></div>
-      <div id="success-msg" class="success-text"></div>
 
-      <!-- PHẦN GHI CHÚ GIỮ NGUYÊN HOÀN TOÀN TỪ ĐẦU TỚI CUỐI -->
       <div class="note-box">
         <p style="margin-bottom: 8px;"><strong>🔒 Lời nhắn từ Quang Vũ:</strong></p>
         <p>Đây là box chat riêng tư của Quang Vũ.</p><br>
@@ -70,7 +65,6 @@
     </div>
   </div>
 
-  <!-- Thư viện mã hóa CryptoJS chuẩn xác -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
   <script type="module">
@@ -108,7 +102,6 @@
     document.getElementById("btn-send").addEventListener("click", sendMessage);
     document.getElementById("message-input").addEventListener("keypress", (e) => { if(e.key === 'Enter') sendMessage(); });
 
-    // ĐĂNG NHẬP
     async function checkPassword() {
       const errorMsg = document.getElementById("error-msg");
       let inputPass = document.getElementById("password-input").value;
@@ -195,7 +188,6 @@
       }
     }
 
-    // Tự động thêm tin nhắn chào mừng ngầm nếu phòng trống hoàn toàn
     async function autoInitRoom() {
       try {
         const snapshot = await get(chatsRef);
