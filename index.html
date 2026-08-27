@@ -14,7 +14,7 @@
     .hint { font-size: 13.5px; color: #65676b; line-height: 1.5; margin-bottom: 14px; background: #f0f2f5; padding: 12px; border-radius: 8px; text-align: left; }
     .login-box input { width: 100%; padding: 14px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; outline: none; text-align: center; margin-bottom: 10px; }
     .login-box button { width: 100%; padding: 14px; background: #0084ff; color: white; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; }
-    .error-text { color: #d93025; background: #ffebe9; padding: 10px; border-radius: 6px; font-size: 13.5px; text-align: center; margin-top: 10px; display: none; }
+    .error-text { color: #d93025; background: #ffebe9; padding: 10px; border-radius: 6px; font-size: 13.5px; text-align: center; margin-top: 10px; display: none; font-weight: 500; border: 1px solid #ffcdd2; }
     .note-box { margin-top: 20px; text-align: left; font-size: 13.5px; color: #444; line-height: 1.6; background: #f7f9fa; padding: 16px; border-radius: 10px; border-left: 4px solid #0084ff; }
     .chat-header { padding: 16px; border-bottom: 1px solid #eee; text-align: center; font-weight: bold; color: #050505; background: #fff; }
     .chat-box { flex: 1; padding: 16px; overflow-y: auto; background: #f9f9f9; display: flex; flex-direction: column; gap: 10px; height: calc(100vh - 120px); }
@@ -38,18 +38,20 @@
       <h2>Vào phòng nhắn tin ẩn danh cùng QuangVu</h2>
       <div class="hint">
         🔒 <b>Mật khẩu là:</b> Ngày/Tháng/Năm Sinh của bạn, viết liền ko dấu.<br><br>
-        <i>Ví dụ: ngày 7 tháng 8 năm 1992 ➔ mật khẩu là 07081992</i>
+        <i>Ví dụ: ngày 5 tháng 6 năm 2026 ➔ mật khẩu là 05062026</i>
       </div>
       <input type="password" id="password-input" placeholder="Nhập mật khẩu...">
       <button id="btn-login">Mở khoá</button>
       <div id="error-msg" class="error-text"></div>
 
+      <!-- ĐÃ KHÔI PHỤC HOÀN TOÀN ĐOẠN PHỤ LỤC GHI CHÚ BAN ĐẦU CỦA BẠN -->
       <div class="note-box">
         <p style="margin-bottom: 8px;"><strong>🔒 Lời nhắn từ Quang Vũ:</strong></p>
         <p>Đây là box chat riêng tư của Quang Vũ.</p><br>
         <p>Phòng trò chuyện này giới hạn 100 người!. Nếu bạn thấy được link này, có nghĩa bạn là người mà anh ấy đang chờ đón cũng như thực sự muốn lắng nghe và chia sẻ từ bạn dưới một danh nghĩa người ẩn danh.</p><br>
         <p>Đừng lo lắng, đây không phải nơi để tán tỉnh hay ép buộc bất kỳ mối quan hệ nào, đây đơn giản là một góc nhỏ an toàn để chúng ta dãi bày những điều trước giờ khó nói hoặc giải tỏa những những tâm sự buồn, vui ,hiểu lầm trong cuộc sống.</p><br>
-        <p>Nếu bạn nhập sai mật khẩu, hệ thống sẽ báo lỗi và không cho vào!</p>
+        <p>Nếu bạn nhập ngày tháng năm sinh của mình và đăng nhập vào và không thấy 1 tin nhắn chờ anh ta đã gửi có nghĩa là bạn vào nhầm phòng.</p><br>
+        <p>Mọi thông tin tại đây đều được bảo mật trên nền tảng của Google. Nếu chưa tin tưởng bảo mật bạn có thể mở web ở <i>Tab ẩn danh</i> hoặc xóa lịch sử duyệt web sau khi dùng để hoàn toàn yên tâm về sự riêng tư, nhưng đổi lại toàn bộ tin nhắn sẽ bị xoá không được lưu lại cho lần trò chuyện sau! MONG LÀ BẠN KHÔNG CẦN DÙNG CÁCH NÀY.</p>
       </div>
     </div>
 
@@ -84,7 +86,7 @@
     const db = getDatabase(app);
     const chatsRef = ref(db, "chats");
 
-    // ===== ĐẶT MẬT KHẨU CỐ ĐỊNH CỦA BẠN TẠI ĐÂY (viết liền không dấu, chữ thường) =====
+    // ===== ĐẶT MẬT KHẨU ĐÚNG DUY NHẤT TẠI ĐÂY (Ví dụ: ngày sinh của bạn) =====
     const CORRECT_PASSWORD = "07081992"; 
     const correctHash = CryptoJS.SHA256(CORRECT_PASSWORD).toString().toLowerCase();
 
@@ -119,9 +121,9 @@
 
       const tempHash = CryptoJS.SHA256(inputPass).toString().toLowerCase();
 
-      // KIỂM TRA MẬT KHẨU CỐ ĐỊNH
+      // KIỂM TRA CHẶN NGAY NẾU SAI MẬT KHẨU
       if (tempHash !== correctHash) {
-        errorMsg.innerText = "❌ Sai mật khẩu rồi! Vui lòng nhập lại.";
+        errorMsg.innerText = "❌ Sai mật khẩu rồi! Không thể truy cập.";
         errorMsg.style.display = "block";
         return;
       }
