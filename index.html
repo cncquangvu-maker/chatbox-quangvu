@@ -6,12 +6,37 @@
   <title>Private Chat</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f0f2f5; height: 100vh; display: flex; justify-content: center; align-items: center; }
-    .container { width: 100%; max-width: 450px; height: 100vh; background: #fff; display: flex; flex-direction: column; position: relative; }
-    @media (min-width: 480px) { .container { height: 90vh; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); overflow: hidden; } }
+    
+    /* Cho phép màn hình cuộn tự nhiên trên điện thoại */
+    html, body { 
+      min-height: 100%; 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+      background: #f0f2f5; 
+      display: flex; 
+      justify-content: center; 
+      align-items: flex-start; 
+    }
+    
+    .container { 
+      width: 100%; 
+      max-width: 450px; 
+      min-height: 100vh; 
+      background: #fff; 
+      display: flex; 
+      flex-direction: column; 
+    }
+
+    @media (min-width: 480px) { 
+      body { align-items: center; padding: 20px 0; }
+      .container { min-height: 90vh; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); overflow: hidden; } 
+    }
     
     /* Giao diện Đăng nhập & Gợi ý */
-    .login-box { padding: 30px 20px; text-align: center; height: 100%; overflow-y: auto; }
+    .login-box { 
+      padding: 30px 20px; 
+      text-align: center; 
+      width: 100%;
+    }
     .login-box h2 { font-size: 20px; color: #1c1e21; margin-bottom: 12px; }
     .hint { font-size: 14px; color: #65676b; line-height: 1.5; margin-bottom: 20px; background: #f0f2f5; padding: 14px; border-radius: 8px; text-align: left; }
     .login-box input { width: 100%; padding: 14px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; outline: none; text-align: center; margin-bottom: 12px; }
@@ -19,7 +44,7 @@
     
     /* Giao diện Khung Chat */
     .chat-header { padding: 16px; border-bottom: 1px solid #eee; text-align: center; font-weight: bold; color: #050505; background: #fff; }
-    .chat-box { flex: 1; padding: 16px; overflow-y: auto; background: #f9f9f9; display: flex; flex-direction: column; gap: 10px; }
+    .chat-box { flex: 1; padding: 16px; overflow-y: auto; background: #f9f9f9; display: flex; flex-direction: column; gap: 10px; min-height: 300px; }
     .msg { max-width: 75%; padding: 10px 14px; border-radius: 18px; font-size: 15px; line-height: 1.4; word-wrap: break-word; }
     .them { background: #e4e6eb; color: #050505; align-self: flex-start; border-bottom-left-radius: 4px; }
     .me { background: #0084ff; color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
