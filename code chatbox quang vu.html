@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Private Chat</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f0f2f5; height: 100vh; display: flex; justify-content: center; align-items: center; }
+    .container { width: 100%; max-width: 450px; height: 100vh; background: #fff; display: flex; flex-direction: column; position: relative; }
+    @media (min-width: 480px) { .container { height: 90vh; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); overflow: hidden; } }
+    
+    /* Giao diện Đăng nhập & Gợi ý */
+    .login-box { padding: 30px 20px; text-align: center; height: 100%; overflow-y: auto; }
+    .login-box h2 { font-size: 20px; color: #1c1e21; margin-bottom: 12px; }
+    .hint { font-size: 14px; color: #65676b; line-height: 1.5; margin-bottom: 20px; background: #f0f2f5; padding: 14px; border-radius: 8px; text-align: left; }
+    .login-box input { width: 100%; padding: 14px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; outline: none; text-align: center; margin-bottom: 12px; }
+    .login-box button { width: 100%; padding: 14px; background: #0084ff; color: white; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; }
+    
+    /* Giao diện Khung Chat */
+    .chat-header { padding: 16px; border-bottom: 1px solid #eee; text-align: center; font-weight: bold; color: #050505; background: #fff; }
+    .chat-box { flex: 1; padding: 16px; overflow-y: auto; background: #f9f9f9; display: flex; flex-direction: column; gap: 10px; }
+    .msg { max-width: 75%; padding: 10px 14px; border-radius: 18px; font-size: 15px; line-height: 1.4; word-wrap: break-word; }
+    .them { background: #e4e6eb; color: #050505; align-self: flex-start; border-bottom-left-radius: 4px; }
+    .me { background: #0084ff; color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+    .input-area { padding: 12px; border-top: 1px solid #eee; display: flex; gap: 8px; background: #fff; }
+    .input-area input { flex: 1; padding: 12px 16px; font-size: 15px; border: 1px solid #ddd; border-radius: 20px; outline: none; }
+    .input-area button { padding: 0 18px; background: #0084ff; color: white; font-weight: bold; border: none; border-radius: 20px; cursor: pointer; }
+    
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- MÀN HÌNH NHẬP MẬT KHẨU & DÒNG GỢI Ý -->
+    <div id="login-screen" class="login-box">
+      <h2>Vào phòng nhắn tin ẩn danh cùng QuangVu</h2>
+      
+      <!-- Dòng chữ gợi ý mật khẩu nằm ở đây -->
+      <div class="hint">
+        🔒 <b>Mật khẩu là:</b> Thời gian Giờ/Phút/Ngày/Tháng mình gửi tin nhắn Fb cuối cùng cho bạn rồi bị block, viết liền ko dấu.<br><br>
+        <i>Ví dụ: 15:20 ngày 5 tháng 8 ➔ mật khẩu là 152058</i>
+      </div>
+      
+      <!-- Ô nhập mật khẩu nằm ở đây -->
+      <input type="password" id="password-input" placeholder="Nhập mật khẩu..." onkeypress="handlePassEnter(event)">
+      <button onclick="checkPassword()">Mở khoá</button>
+      
+      <p id="error-msg" style="color: #fa3e3e; margin-top: 10px; font-size: 14px; display: none;">Mật khẩu chưa chính xác!</p>
+    </div>
+<!-- Thông điệp của Quang Vũ -->
+      <div style="margin-top: 20px; text-align: left; font-size: 13.5px; color: #444; line-height: 1.6; background: #f7f9fa; padding: 14px; border-radius: 10px; border-left: 4px solid #0084ff;">
+        <p style="margin-bottom: 8px;"><strong>🔒 Lời nhắn từ Quang Vũ:</strong></p>
+        <p>Đây là box chat riêng tư của Quang Vũ.</p>
+        <br>
+        <p>Phòng trò chuyện này giới hạn 100 người!. Nếu bạn thấy được link này, và có mã để vào được phòng nói chuyện cùng anh ấy có nghĩa bạn là người mà anh ấy đang chờ đón cũng như thực sự muốn lắng nghe và chia sẻ từ bạn dưới một danh nghĩa người ẩn danh.</p>
+        <br>
+        <p>Đừng lo lắng, đây không phải nơi để tán tỉnh hay ép buộc bất kỳ mối quan hệ nào, đây đơn giản là một góc nhỏ an toàn để chúng ta dãi bày những điều trước giờ khó nói hoặc giải tỏa những những tâm sự buồn, vui ,hiểu lầm trong cuộc sống.</p>
+        <br>
+        <p>Nếu bạn đăng nhập vào mà không thấy 1 tin nhắn chờ mình đã gửi, có nghĩa là phòng chát bị lỗi code, hãy ra tín hiệu gì đó mình sẽ sửa lại.</p>
+        <br>
+        <p>Mọi thông tin tại đây đều được bảo mật trên nền tảng của Google. Nếu chưa tin tưởng bảo mật bạn có thể mở web ở <i>Tab ẩn danh</i> hoặc xóa lịch sử duyệt web sau khi dùng để hoàn toàn yên tâm về sự riêng tư, nhưng đổi lại toàn bộ tin nhắn sẽ bị xoá không được lưu lại cho lần trò chuyện sau! MONG LÀ BẠN KHÔNG CẦN DÙNG CÁCH NÀY.</p>
+      </div>
+    </div>
+
+    <!-- MÀN HÌNH CHAT -->
+    <div id="chat-screen" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
+      <div class="chat-header">Trò chuyện riêng tư</div>
+      <div id="chat-box" class="chat-box"></div>
+      <div class="input-area">
+        <input type="text" id="message-input" placeholder="Nhập tin nhắn..." onkeypress="handleMsgEnter(event)">
+        <button onclick="sendMessage()">Gửi</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDM5qSlBct9dd8dNRPUGHQBYLos7yevHAE",
+      authDomain: "chatbox-quangvu.firebaseapp.com",
+      databaseURL: "https://chatbox-quangvu-default-rtdb.firebaseio.com",
+      projectId: "chatbox-quangvu",
+      storageBucket: "chatbox-quangvu.firebasestorage.app",
+      messagingSenderId: "442167900084",
+      appId: "1:442167900084:web:7d817c4d4aefbcad3324e1",
+      measurementId: "G-VM9GT3XWF8"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database().ref("chats");
+
+    let userPass = "";
+    let senderId = localStorage.getItem("chat_user_id");
+    if (!senderId) {
+      senderId = "user_" + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem("chat_user_id", senderId);
+    }
+
+    function checkPassword() {
+      const inputPass = document.getElementById("password-input").value.trim();
+      if (!inputPass) return;
+
+      db.orderByChild("pass").equalTo(inputPass).once("value", (snapshot) => {
+        userPass = inputPass;
+        document.getElementById("login-screen").classList.add("hidden");
+        document.getElementById("chat-screen").classList.remove("hidden");
+        initChat();
+      }, (error) => {
+        document.getElementById("error-msg").style.display = "block";
+      });
+    }
+
+    function handlePassEnter(e) { if (e.key === 'Enter') checkPassword(); }
+    function handleMsgEnter(e) { if (e.key === 'Enter') sendMessage(); }
+
+    function initChat() {
+      db.orderByChild("pass").equalTo(userPass).on("child_added", (snapshot) => {
+        const data = snapshot.val();
+        displayMessage(data.text, data.sender === senderId ? "me" : "them");
+      }, (err) => {
+        document.getElementById("error-msg").style.display = "block";
+      });
+    }
+
+    function sendMessage() {
+      const input = document.getElementById("message-input");
+      const text = input.value.trim();
+      if (text !== "" && userPass !== "") {
+        db.push({
+          sender: senderId,
+          text: text,
+          pass: userPass,
+          timestamp: Date.now()
+        });
+        input.value = "";
+      }
+    }
+
+    function displayMessage(text, side) {
+      const box = document.getElementById("chat-box");
+      const msgDiv = document.createElement("div");
+      msgDiv.className = `msg ${side}`;
+      msgDiv.innerText = text;
+      box.appendChild(msgDiv);
+      box.scrollTop = box.scrollHeight;
+    }
+  </script>
+</body>
+</html>
