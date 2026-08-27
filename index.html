@@ -6,7 +6,7 @@
   <title>Private Chat</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; min-height: 100vh; overflow-y: auto !important; }
+    html, body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; min-height: 100vh; }
     .container { width: 100%; max-width: 450px; margin: 0 auto; background: #fff; min-height: 100vh; }
     @media (min-width: 480px) { body { padding: 20px 0; } .container { min-height: 90vh; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); } }
     .login-box { padding: 20px; width: 100%; }
@@ -16,7 +16,6 @@
     .login-box button { width: 100%; padding: 14px; background: #0084ff; color: white; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; }
     
     .error-text { color: #d93025; background: #ffebe9; padding: 10px; border-radius: 6px; font-size: 14px; text-align: center; margin-top: 10px; font-weight: 500; border: 1px solid #ffcdd2; display: none; }
-    
     .note-box { margin-top: 20px; text-align: left; font-size: 13.5px; color: #444; line-height: 1.6; background: #f7f9fa; padding: 16px; border-radius: 10px; border-left: 4px solid #0084ff; }
     .chat-header { padding: 16px; border-bottom: 1px solid #eee; text-align: center; font-weight: bold; color: #050505; background: #fff; }
     .chat-box { flex: 1; padding: 16px; overflow-y: auto; background: #f9f9f9; display: flex; flex-direction: column; gap: 10px; height: calc(100vh - 120px); }
@@ -48,6 +47,7 @@
       <input type="password" id="password-input" placeholder="Nhập mật khẩu..." onkeypress="handlePassEnter(event)">
       <button onclick="checkPassword()">Mở khoá</button>
       
+      <!-- Dòng báo lỗi mật khẩu đỏ nổi bật -->
       <div id="error-msg" class="error-text"></div>
 
       <div class="note-box">
@@ -114,36 +114,51 @@
         return;
       }
 
-      // Tạo mã SHA-256 chữ thường
+      // Mã hóa SHA-256 từ ô nhập
       const tempHash = CryptoJS.SHA256(inputPass).toString().toLowerCase();
 
-      // Đọc trực tiếp toàn bộ dữ liệu phòng chats
       db.once("value").then((snapshot) => {
         const data = snapshot.val();
-        let isMatch = false;
-
-        if (data) {
-          Object.keys(data).forEach(key => {
-            // So sánh không phân biệt hoa thường
-            if (data[key] && data[key].passHash && data[key].passHash.toLowerCase() === tempHash) {
-              isMatch = true;
-            }
+        
+        // Nếu database hoàn toàn trống, tự tạo tin nhắn chào mừng đầu tiên
+        if (!data) {
+          db.push({
+            sender: "QuangVu",
+            senderName: "Quang Vũ",
+            text: "Chào mừng bạn tới phòng trò chuyện của tiktok quangvu7892,( Mình là nam, sinh 7/8/1992 ). Hãy để lại một lời chào hoặc một dấu (.)để mình biết đã có người vào nhé!",
+            passHash: tempHash,
+            timestamp: Date.now()
+          }).then(() => {
+            enterChatRoom(tempHash);
           });
+          return;
         }
 
+        // Tìm kiếm passHash khớp trong Database
+        let isMatch = false;
+        Object.keys(data).forEach(key => {
+          if (data[key] && data[key].passHash && data[key].passHash.toLowerCase() === tempHash) {
+            isMatch = true;
+          }
+        });
+
         if (isMatch) {
-          hashedPass = tempHash;
-          document.getElementById("login-screen").classList.add("hidden");
-          document.getElementById("chat-screen").classList.remove("hidden");
-          initChat();
+          enterChatRoom(tempHash);
         } else {
-          errorMsg.innerText = "❌ Mật khẩu chưa chính xác!";
+          errorMsg.innerText = "❌ Mật khẩu chưa chính xác hoặc chưa có phòng chat nào tạo bằng mật khẩu này!";
           errorMsg.style.display = "block";
         }
       }).catch((err) => {
-        errorMsg.innerText = "⚠️ Lỗi kết nối Firebase!";
+        errorMsg.innerText = "⚠️ Lỗi kết nối Firebase (Vui lòng kiểm tra lại Rules)!";
         errorMsg.style.display = "block";
       });
+    }
+
+    function enterChatRoom(passHash) {
+      hashedPass = passHash;
+      document.getElementById("login-screen").classList.add("hidden");
+      document.getElementById("chat-screen").classList.remove("hidden");
+      initChat();
     }
 
     function handlePassEnter(e) { if (e.key === 'Enter') checkPassword(); }
