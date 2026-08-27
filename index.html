@@ -38,7 +38,7 @@
       <h2>Vào phòng nhắn tin ẩn danh cùng QuangVu</h2>
       <div class="hint">
         🔒 <b>Mật khẩu là:</b> Ngày/Tháng/Năm Sinh của bạn, viết liền ko dấu.<br><br>
-        <i>Ví dụ: ngày 7 tháng 8 năm 1992 ➔ mật khẩu là 07081992</i>
+        <i>Ví dụ: ngày 18 tháng 8 năm 2001 ➔ mật khẩu là 18082001</i>
       </div>
       <input type="password" id="password-input" placeholder="Nhập mật khẩu...">
       <button id="btn-login">Mở khoá</button>
@@ -85,8 +85,8 @@
     const db = getDatabase(app);
     const chatsRef = ref(db, "chats");
 
-    // ===== MẬT KHẨU ĐÚNG DUY NHẤT (Bạn có thể đổi chuỗi này) =====
-    const CORRECT_PASSWORD = "07081992"; 
+    // ===== MẬT KHẨU ĐÚNG ĐÃ ĐƯỢC CẬP NHẬT LÀ 18082001 =====
+    const CORRECT_PASSWORD = "18082001"; 
     const correctHash = CryptoJS.SHA256(CORRECT_PASSWORD).toString().toLowerCase();
 
     let senderId = localStorage.getItem("chat_user_id");
@@ -120,11 +120,11 @@
 
       const tempHash = CryptoJS.SHA256(inputPass).toString().toLowerCase();
 
-      // KIỂM TRA TUYỆT ĐỐI: NẾU KHÔNG KHỚP MẬT KHẨU CHUẨN THÌ DỪNG NGAY LẬP TỨC
+      // KIỂM TRA NGHIÊM NGẶT: NẾU SAI MẬT KHẨU SẼ CHẶN NGAY, KHÔNG CHO VÀO
       if (tempHash !== correctHash) {
         errorMsg.innerText = "❌ Sai mật khẩu rồi! Không thể truy cập.";
         errorMsg.style.display = "block";
-        return; // Dừng hàm ngay lập tức, không cho chạy tiếp xuống dưới
+        return;
       }
 
       btn.innerText = "Đang vào phòng...";
