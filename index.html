@@ -15,7 +15,6 @@
     .login-box input { width: 100%; padding: 14px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; outline: none; text-align: center; margin-bottom: 10px; }
     .login-box button { width: 100%; padding: 13px; font-size: 15px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 8px; }
     #btn-login { background: #0084ff; color: white; }
-    #btn-create { background: #e4e6eb; color: #050505; }
     .error-text { color: #d93025; background: #ffebe9; padding: 10px; border-radius: 6px; font-size: 13.5px; text-align: center; margin-top: 10px; display: none; font-weight: 500; border: 1px solid #ffcdd2; }
     .success-text { color: #0b8043; background: #e6f4ea; padding: 10px; border-radius: 6px; font-size: 13.5px; text-align: center; margin-top: 10px; display: none; font-weight: 500; border: 1px solid #ceead6; }
     .note-box { margin-top: 20px; text-align: left; font-size: 13.5px; color: #444; line-height: 1.6; background: #f7f9fa; padding: 16px; border-radius: 10px; border-left: 4px solid #0084ff; }
@@ -46,7 +45,6 @@
       <input type="password" id="password-input" placeholder="Nhập mật khẩu...">
       
       <button id="btn-login">Mở khoá vào phòng</button>
-      <button id="btn-create">Tạo mật khẩu mới này (Dành cho chủ phòng)</button>
 
       <div id="error-msg" class="error-text"></div>
       <div id="success-msg" class="success-text"></div>
@@ -106,7 +104,6 @@
     }
 
     document.getElementById("btn-login").addEventListener("click", checkPassword);
-    document.getElementById("btn-create").addEventListener("click", createPassword);
     document.getElementById("password-input").addEventListener("keypress", (e) => { if(e.key === 'Enter') checkPassword(); });
     document.getElementById("btn-send").addEventListener("click", sendMessage);
     document.getElementById("message-input").addEventListener("keypress", (e) => { if(e.key === 'Enter') sendMessage(); });
@@ -114,12 +111,10 @@
     // ĐĂNG NHẬP
     async function checkPassword() {
       const errorMsg = document.getElementById("error-msg");
-      const successMsg = document.getElementById("success-msg");
       let inputPass = document.getElementById("password-input").value;
       
       inputPass = inputPass.trim().replace(/\s+/g, '').toLowerCase();
       errorMsg.style.display = "none";
-      successMsg.style.display = "none";
 
       if (!inputPass) {
         errorMsg.innerText = "⚠️ Vui lòng nhập mật khẩu!";
@@ -134,7 +129,7 @@
         const data = snapshot.val();
 
         if (!data) {
-          errorMsg.innerText = "❌ Chưa có mật khẩu nào được tạo! Hãy bấm nút 'Tạo mật khẩu mới'.";
+          errorMsg.innerText = "❌ Chưa có dữ liệu phòng chat!";
           errorMsg.style.display = "block";
           return;
         }
@@ -154,40 +149,6 @@
         }
       } catch (err) {
         errorMsg.innerText = "⚠️ Lỗi kết nối Firebase: " + err.message;
-        errorMsg.style.display = "block";
-      }
-    }
-
-    // TẠO MẬT KHẨU MỚI
-    async function createPassword() {
-      const errorMsg = document.getElementById("error-msg");
-      const successMsg = document.getElementById("success-msg");
-      let inputPass = document.getElementById("password-input").value;
-      
-      inputPass = inputPass.trim().replace(/\s+/g, '').toLowerCase();
-      errorMsg.style.display = "none";
-      successMsg.style.display = "none";
-
-      if (!inputPass) {
-        errorMsg.innerText = "⚠️ Vui lòng nhập mật khẩu muốn tạo vào ô trống!";
-        errorMsg.style.display = "block";
-        return;
-      }
-
-      const tempHash = CryptoJS.SHA256(inputPass).toString().toLowerCase();
-
-      try {
-        await push(chatsRef, {
-          sender: "QuangVu",
-          senderName: "Quang Vũ",
-          text: "Chào mừng bạn tới phòng trò chuyện của tiktok quangvu7892,( Mình là nam, sinh 7/8/1992 ). Hãy để lại một lời chào hoặc một dấu (.)để mình biết đã có người vào nhé!",
-          passHash: tempHash,
-          timestamp: Date.now()
-        });
-        successMsg.innerText = "✅ Tạo mật khẩu thành công! Bây giờ bạn có thể bấm 'Mở khoá vào phòng'.";
-        successMsg.style.display = "block";
-      } catch (err) {
-        errorMsg.innerText = "⚠️ Lỗi khi tạo: " + err.message;
         errorMsg.style.display = "block";
       }
     }
@@ -233,6 +194,24 @@
         }
       }
     }
+
+    // Tự động thêm tin nhắn chào mừng ngầm nếu phòng trống hoàn toàn
+    async function autoInitRoom() {
+      try {
+        const snapshot = await get(chatsRef);
+        if (!snapshot.exists()) {
+          const defaultHash = CryptoJS.SHA256("07081992").toString().toLowerCase();
+          await push(chatsRef, {
+            sender: "QuangVu",
+            senderName: "Quang Vũ",
+            text: "Chào mừng bạn tới phòng trò chuyện của tiktok quangvu7892,( Mình là nam, sinh 7/8/1992 ). Hãy để lại một lời chào hoặc một dấu (.)để mình biết đã có người vào nhé!",
+            passHash: defaultHash,
+            timestamp: Date.now()
+          });
+        }
+      } catch(e) {}
+    }
+    autoInitRoom();
 
     function displayMessage(msgId, text, name, side) {
       const box = document.getElementById("chat-box");
