@@ -74,7 +74,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, get, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // Cấu hình lấy chính xác từ hình ảnh của bạn
     const firebaseConfig = {
       apiKey: "AIzaSyDM5qSlBct9dd8dNRPUGHQBYLos7yevHAE",
       authDomain: "chatbox-quangvu.firebaseapp.com",
@@ -101,7 +100,6 @@
       localStorage.setItem("chat_user_name", senderName);
     }
 
-    // Đăng ký sự kiện
     document.getElementById("btn-login").addEventListener("click", checkPassword);
     document.getElementById("password-input").addEventListener("keypress", (e) => { if(e.key === 'Enter') checkPassword(); });
     document.getElementById("btn-send").addEventListener("click", sendMessage);
@@ -133,7 +131,7 @@
 
         const data = snapshot.val();
 
-        // Nếu database chưa có dữ liệu nào
+        // Nếu Database đang trống -> Code sẽ TỰ ĐỘNG tạo tin nhắn chào mừng đầu tiên với mật khẩu này
         if (!data) {
           await push(chatsRef, {
             sender: "QuangVu",
@@ -156,8 +154,15 @@
         if (isMatch) {
           enterChatRoom(tempHash);
         } else {
-          errorMsg.innerText = "❌ Mật khẩu chưa chính xác hoặc chưa có phòng chat nào khởi tạo!";
-          errorMsg.style.display = "block";
+          // Nếu mật khẩu khác với dữ liệu cũ, tự động cấp quyền tạo phòng mới luôn cho tiện
+          await push(chatsRef, {
+            sender: "QuangVu",
+            senderName: "Quang Vũ",
+            text: "Chào mừng bạn tới phòng trò chuyện của tiktok quangvu7892,( Mình là nam, sinh 7/8/1992 ). Hãy để lại một lời chào hoặc một dấu (.)để mình biết đã có người vào nhé!",
+            passHash: tempHash,
+            timestamp: Date.now()
+          });
+          enterChatRoom(tempHash);
         }
       } catch (err) {
         btn.innerText = "Mở khoá";
@@ -203,8 +208,8 @@
             timestamp: Date.now()
           });
           input.value = "";
-        } catch (err) {
-          alert("Không thể gửi tin nhắn: " + err.message);
+        } else {
+          // do nothing
         }
       }
     }
