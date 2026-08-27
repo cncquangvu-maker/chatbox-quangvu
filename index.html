@@ -11,6 +11,7 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
       background: #f0f2f5; 
       min-height: 100vh;
+      overflow-y: auto; /* Cho phép cuộn trang tự nhiên */
     }
     
     .container { 
@@ -28,17 +29,17 @@
     
     /* Giao diện Đăng nhập */
     .login-box { 
-      padding: 24px 20px; 
+      padding: 20px; 
       width: 100%;
     }
-    .login-box h2 { font-size: 20px; color: #1c1e21; margin-bottom: 16px; text-align: center; }
-    .hint { font-size: 14px; color: #65676b; line-height: 1.5; margin-bottom: 16px; background: #f0f2f5; padding: 14px; border-radius: 8px; text-align: left; }
-    .login-box input { width: 100%; padding: 14px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; outline: none; text-align: center; margin-bottom: 12px; }
+    .login-box h2 { font-size: 19px; color: #1c1e21; margin-bottom: 14px; text-align: center; }
+    .hint { font-size: 13.5px; color: #65676b; line-height: 1.5; margin-bottom: 14px; background: #f0f2f5; padding: 12px; border-radius: 8px; text-align: left; }
+    .login-box input { width: 100%; padding: 14px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; outline: none; text-align: center; margin-bottom: 10px; }
     .login-box button { width: 100%; padding: 14px; background: #0084ff; color: white; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; }
     
     /* Ghi chú riêng tư cuộn phía dưới */
     .note-box {
-      margin-top: 24px; 
+      margin-top: 20px; 
       text-align: left; 
       font-size: 13.5px; 
       color: #444; 
@@ -65,7 +66,7 @@
 <body>
 
   <div class="container">
-    <!-- MÀN HÌNH NHẬP MẬT KHẨU & DÒNG GỢI Ý -->
+    <!-- MÀN HÌNH NHẬP MẬT KHẨU (NẰM Ở TRÊN CÙNG) -->
     <div id="login-screen" class="login-box">
       <h2>Vào phòng nhắn tin ẩn danh cùng QuangVu</h2>
       
@@ -75,13 +76,13 @@
         <i>Ví dụ: 15:20 ngày 5 tháng 8 ➔ mật khẩu là 152058</i>
       </div>
       
-      <!-- Ô nhập mật khẩu -->
+      <!-- Ô nhập mật khẩu & Nút mở khóa -->
       <input type="password" id="password-input" placeholder="Nhập mật khẩu..." onkeypress="handlePassEnter(event)">
       <button onclick="checkPassword()">Mở khoá</button>
       
       <p id="error-msg" style="color: #fa3e3e; margin-top: 10px; font-size: 14px; text-align: center; display: none;">Mật khẩu chưa chính xác!</p>
 
-      <!-- Thông điệp của Quang Vũ nằm phía dưới, dễ dàng cuộn -->
+      <!-- THÔNG ĐIỆP TÂM SỰ NẰM BÊN DƯỚI (CUỘN THOẢI MÁI) -->
       <div class="note-box">
         <p style="margin-bottom: 8px;"><strong>🔒 Lời nhắn từ Quang Vũ:</strong></p>
         <p>Đây là box chat riêng tư của Quang Vũ.</p>
