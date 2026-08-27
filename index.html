@@ -15,7 +15,7 @@
     .login-box input { width: 100%; padding: 14px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; outline: none; text-align: center; margin-bottom: 10px; }
     .login-box button { width: 100%; padding: 14px; background: #0084ff; color: white; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; }
     
-    #error-msg { color: #fa3e3e; margin-top: 10px; font-size: 14px; text-align: center; display: none; font-weight: 500; }
+    .error-text { color: #d93025; background: #ffebe9; padding: 10px; border-radius: 6px; font-size: 14px; text-align: center; margin-top: 10px; font-weight: 500; border: 1px solid #ffcdd2; display: none; }
     
     .note-box { margin-top: 20px; text-align: left; font-size: 13.5px; color: #444; line-height: 1.6; background: #f7f9fa; padding: 16px; border-radius: 10px; border-left: 4px solid #0084ff; }
     .chat-header { padding: 16px; border-bottom: 1px solid #eee; text-align: center; font-weight: bold; color: #050505; background: #fff; }
@@ -48,8 +48,7 @@
       <input type="password" id="password-input" placeholder="Nhập mật khẩu..." onkeypress="handlePassEnter(event)">
       <button onclick="checkPassword()">Mở khoá</button>
       
-      <!-- Dòng báo lỗi mật khẩu -->
-      <p id="error-msg">Mật khẩu chưa chính xác!</p>
+      <div id="error-msg" class="error-text"></div>
 
       <div class="note-box">
         <p style="margin-bottom: 8px;"><strong>🔒 Lời nhắn từ Quang Vũ:</strong></p>
@@ -72,7 +71,6 @@
     </div>
   </div>
 
-  <!-- Thư viện Firebase & CryptoJS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -111,25 +109,40 @@
       errorMsg.style.display = "none";
 
       if (!inputPass) {
-        errorMsg.innerText = "Vui lòng nhập mật khẩu!";
+        errorMsg.innerText = "⚠️ Vui lòng nhập mật khẩu!";
         errorMsg.style.display = "block";
         return;
       }
 
-      // Mã hóa SHA-256
-      const tempHash = CryptoJS.SHA256(inputPass).toString();
+      // Tạo mã SHA-256 chữ thường
+      const tempHash = CryptoJS.SHA256(inputPass).toString().toLowerCase();
 
-      // Kiểm tra passHash trên Firebase
-      db.orderByChild("passHash").equalTo(tempHash).once("value", (snapshot) => {
-        if (snapshot.exists()) {
+      // Đọc trực tiếp toàn bộ dữ liệu phòng chats
+      db.once("value").then((snapshot) => {
+        const data = snapshot.val();
+        let isMatch = false;
+
+        if (data) {
+          Object.keys(data).forEach(key => {
+            // So sánh không phân biệt hoa thường
+            if (data[key] && data[key].passHash && data[key].passHash.toLowerCase() === tempHash) {
+              isMatch = true;
+            }
+          });
+        }
+
+        if (isMatch) {
           hashedPass = tempHash;
           document.getElementById("login-screen").classList.add("hidden");
           document.getElementById("chat-screen").classList.remove("hidden");
           initChat();
         } else {
-          errorMsg.innerText = "Mật khẩu chưa chính xác!";
+          errorMsg.innerText = "❌ Mật khẩu chưa chính xác!";
           errorMsg.style.display = "block";
         }
+      }).catch((err) => {
+        errorMsg.innerText = "⚠️ Lỗi kết nối Firebase!";
+        errorMsg.style.display = "block";
       });
     }
 
@@ -140,13 +153,14 @@
       const box = document.getElementById("chat-box");
       box.innerHTML = "";
 
-      // Đọc và lọc tin nhắn theo passHash
-      db.orderByChild("passHash").equalTo(hashedPass).on("child_added", (snapshot) => {
+      db.on("child_added", (snapshot) => {
         const msgId = snapshot.key;
         const data = snapshot.val();
         
-        if (data && data.text && !document.getElementById(msgId)) {
-          displayMessage(msgId, data.text, data.senderName || "Ẩn danh", data.sender === senderId ? "me" : "them");
+        if (data && data.passHash && data.passHash.toLowerCase() === hashedPass && data.text) {
+          if (!document.getElementById(msgId)) {
+            displayMessage(msgId, data.text, data.senderName || "Ẩn danh", data.sender === senderId ? "me" : "them");
+          }
         }
       });
     }
@@ -163,7 +177,7 @@
           timestamp: Date.now()
         }, (error) => {
           if (error) {
-            alert("Lỗi kết nối Firebase!");
+            alert("Lỗi gửi tin nhắn!");
           } else {
             input.value = "";
           }
