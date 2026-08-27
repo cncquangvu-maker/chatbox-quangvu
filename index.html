@@ -14,6 +14,9 @@
     .hint { font-size: 13.5px; color: #65676b; line-height: 1.5; margin-bottom: 14px; background: #f0f2f5; padding: 12px; border-radius: 8px; text-align: left; }
     .login-box input { width: 100%; padding: 14px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; outline: none; text-align: center; margin-bottom: 10px; }
     .login-box button { width: 100%; padding: 14px; background: #0084ff; color: white; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; }
+    
+    #error-msg { color: #fa3e3e; margin-top: 10px; font-size: 14px; text-align: center; display: none; font-weight: 500; }
+    
     .note-box { margin-top: 20px; text-align: left; font-size: 13.5px; color: #444; line-height: 1.6; background: #f7f9fa; padding: 16px; border-radius: 10px; border-left: 4px solid #0084ff; }
     .chat-header { padding: 16px; border-bottom: 1px solid #eee; text-align: center; font-weight: bold; color: #050505; background: #fff; }
     .chat-box { flex: 1; padding: 16px; overflow-y: auto; background: #f9f9f9; display: flex; flex-direction: column; gap: 10px; height: calc(100vh - 120px); }
@@ -45,7 +48,8 @@
       <input type="password" id="password-input" placeholder="Nhập mật khẩu..." onkeypress="handlePassEnter(event)">
       <button onclick="checkPassword()">Mở khoá</button>
       
-      <p id="error-msg" style="color: #fa3e3e; margin-top: 10px; font-size: 14px; text-align: center; display: none;"></p>
+      <!-- Dòng báo lỗi mật khẩu -->
+      <p id="error-msg">Mật khẩu chưa chính xác!</p>
 
       <div class="note-box">
         <p style="margin-bottom: 8px;"><strong>🔒 Lời nhắn từ Quang Vũ:</strong></p>
@@ -112,29 +116,18 @@
         return;
       }
 
-      // Mã hóa SHA-256 từ ô nhập
+      // Mã hóa SHA-256
       const tempHash = CryptoJS.SHA256(inputPass).toString();
 
-      // Đọc toàn bộ danh sách nút dưới "chats" để kiểm tra passHash
-      db.once("value", (snapshot) => {
-        const data = snapshot.val();
-        let isMatch = false;
-
-        if (data) {
-          Object.keys(data).forEach(key => {
-            if (data[key] && data[key].passHash === tempHash) {
-              isMatch = true;
-            }
-          });
-        }
-
-        if (isMatch) {
+      // Kiểm tra passHash trên Firebase
+      db.orderByChild("passHash").equalTo(tempHash).once("value", (snapshot) => {
+        if (snapshot.exists()) {
           hashedPass = tempHash;
           document.getElementById("login-screen").classList.add("hidden");
           document.getElementById("chat-screen").classList.remove("hidden");
           initChat();
         } else {
-          errorMsg.innerText = "Mật khẩu chưa chính xác! Vui lòng thử lại.";
+          errorMsg.innerText = "Mật khẩu chưa chính xác!";
           errorMsg.style.display = "block";
         }
       });
@@ -147,15 +140,13 @@
       const box = document.getElementById("chat-box");
       box.innerHTML = "";
 
-      db.on("child_added", (snapshot) => {
+      // Đọc và lọc tin nhắn theo passHash
+      db.orderByChild("passHash").equalTo(hashedPass).on("child_added", (snapshot) => {
         const msgId = snapshot.key;
         const data = snapshot.val();
         
-        // Chỉ hiển thị tin nhắn thuộc về mã mật khẩu này và có nội dung văn bản
-        if (data && data.passHash === hashedPass && data.text) {
-          if (!document.getElementById(msgId)) {
-            displayMessage(msgId, data.text, data.senderName || "Ẩn danh", data.sender === senderId ? "me" : "them");
-          }
+        if (data && data.text && !document.getElementById(msgId)) {
+          displayMessage(msgId, data.text, data.senderName || "Ẩn danh", data.sender === senderId ? "me" : "them");
         }
       });
     }
