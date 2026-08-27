@@ -44,7 +44,6 @@
       <button id="btn-login">Mở khoá</button>
       <div id="error-msg" class="error-text"></div>
 
-      <!-- ĐÃ KHÔI PHỤC HOÀN TOÀN ĐOẠN PHỤ LỤC GHI CHÚ BAN ĐẦU CỦA BẠN -->
       <div class="note-box">
         <p style="margin-bottom: 8px;"><strong>🔒 Lời nhắn từ Quang Vũ:</strong></p>
         <p>Đây là box chat riêng tư của Quang Vũ.</p><br>
@@ -86,7 +85,7 @@
     const db = getDatabase(app);
     const chatsRef = ref(db, "chats");
 
-    // ===== ĐẶT MẬT KHẨU ĐÚNG DUY NHẤT TẠI ĐÂY (Ví dụ: ngày sinh của bạn) =====
+    // ===== MẬT KHẨU ĐÚNG DUY NHẤT CỦA BẠN (Sửa ở đây nếu cần đổi mật khẩu) =====
     const CORRECT_PASSWORD = "07081992"; 
     const correctHash = CryptoJS.SHA256(CORRECT_PASSWORD).toString().toLowerCase();
 
@@ -121,7 +120,7 @@
 
       const tempHash = CryptoJS.SHA256(inputPass).toString().toLowerCase();
 
-      // KIỂM TRA CHẶN NGAY NẾU SAI MẬT KHẨU
+      // KIỂM TRA NGHIÊM NGẶT: NẾU KHÁC MẬT KHẨU CHUẨN THÌ CHẶN NGAY LẬP TỨC
       if (tempHash !== correctHash) {
         errorMsg.innerText = "❌ Sai mật khẩu rồi! Không thể truy cập.";
         errorMsg.style.display = "block";
