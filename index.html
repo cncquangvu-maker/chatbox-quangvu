@@ -38,18 +38,19 @@
       <h2>Vào phòng nhắn tin ẩn danh cùng QuangVu</h2>
       <div class="hint">
         🔒 <b>Mật khẩu là:</b> Ngày/Tháng/Năm Sinh của bạn, viết liền ko dấu.<br><br>
-        <i>Ví dụ: ngày 05 tháng 06 năm 2000 ➔ mật khẩu là 05062000</i>
+        <i>Ví dụ: ngày 05 tháng 06 năm 2026 ➔ mật khẩu là 05062026</i>
       </div>
       <input type="password" id="password-input" placeholder="Nhập mật khẩu...">
       <button id="btn-login">Mở khoá</button>
       <div id="error-msg" class="error-text"></div>
 
+      <!-- ĐÃ KHÔI PHỤC HOÀN TOÀN ĐOẠN PHỤ LỤC GHI CHÚ BAN ĐẦU CỦA BẠN -->
       <div class="note-box">
         <p style="margin-bottom: 8px;"><strong>🔒 Lời nhắn từ Quang Vũ:</strong></p>
         <p>Đây là box chat riêng tư của Quang Vũ.</p><br>
         <p>Phòng trò chuyện này giới hạn 100 người!. Nếu bạn thấy được link này, có nghĩa bạn là người mà anh ấy đang chờ đón cũng như thực sự muốn lắng nghe và chia sẻ từ bạn dưới một danh nghĩa người ẩn danh.</p><br>
         <p>Đừng lo lắng, đây không phải nơi để tán tỉnh hay ép buộc bất kỳ mối quan hệ nào, đây đơn giản là một góc nhỏ an toàn để chúng ta dãi bày những điều trước giờ khó nói hoặc giải tỏa những những tâm sự buồn, vui ,hiểu lầm trong cuộc sống.</p><br>
-        <p>Если bạn nhập ngày tháng năm sinh của mình và đăng nhập vào và không thấy 1 tin nhắn chờ anh ta đã gửi có nghĩa là bạn vào nhầm phòng.</p><br>
+        <p>Nếu bạn nhập ngày tháng năm sinh của mình và đăng nhập vào và không thấy 1 tin nhắn chờ anh ta đã gửi có nghĩa là bạn vào nhầm phòng.</p><br>
         <p>Mọi thông tin tại đây đều được bảo mật trên nền tảng của Google. Nếu chưa tin tưởng bảo mật bạn có thể mở web ở <i>Tab ẩn danh</i> hoặc xóa lịch sử duyệt web sau khi dùng để hoàn toàn yên tâm về sự riêng tư, nhưng đổi lại toàn bộ tin nhắn sẽ bị xoá không được lưu lại cho lần trò chuyện sau! MONG LÀ BẠN KHÔNG CẦN DÙNG CÁCH NÀY.</p>
       </div>
     </div>
@@ -85,6 +86,10 @@
     const db = getDatabase(app);
     const chatsRef = ref(db, "chats");
 
+    // ===== ĐẶT MẬT KHẨU ĐÚNG DUY NHẤT TẠI ĐÂY (Ví dụ: ngày sinh của bạn) =====
+    const CORRECT_PASSWORD = "07081992"; 
+    const correctHash = CryptoJS.SHA256(CORRECT_PASSWORD).toString().toLowerCase();
+
     let senderId = localStorage.getItem("chat_user_id");
     let senderName = localStorage.getItem("chat_user_name");
 
@@ -99,8 +104,6 @@
     document.getElementById("password-input").addEventListener("keypress", (e) => { if(e.key === 'Enter') checkPassword(); });
     document.getElementById("btn-send").addEventListener("click", sendMessage);
     document.getElementById("message-input").addEventListener("keypress", (e) => { if(e.key === 'Enter') sendMessage(); });
-
-    let activePassHash = "";
 
     async function checkPassword() {
       const btn = document.getElementById("btn-login");
@@ -118,7 +121,14 @@
 
       const tempHash = CryptoJS.SHA256(inputPass).toString().toLowerCase();
 
-      btn.innerText = "Đang kiểm tra...";
+      // KIỂM TRA CHẶN NGAY NẾU SAI MẬT KHẨU
+      if (tempHash !== correctHash) {
+        errorMsg.innerText = "❌ Sai mật khẩu rồi! Không thể truy cập.";
+        errorMsg.style.display = "block";
+        return;
+      }
+
+      btn.innerText = "Đang vào phòng...";
       btn.disabled = true;
 
       try {
@@ -127,34 +137,17 @@
         btn.disabled = false;
 
         const data = snapshot.val();
-
-        // TRƯỜNG HỢP 1: Database trống (chưa có gì) -> Tự động nhận mật khẩu bạn vừa nhập làm chuẩn luôn
         if (!data) {
-          activePassHash = tempHash;
           await push(chatsRef, {
             sender: "QuangVu",
             senderName: "Quang Vũ",
             text: "Chào mừng bạn tới phòng trò chuyện của tiktok quangvu7892,( Mình là nam, sinh 7/8/1992 ). Hãy để lại một lời chào hoặc một dấu (.)để mình biết đã có người vào nhé!",
-            passHash: activePassHash,
+            passHash: correctHash,
             timestamp: Date.now()
           });
-          enterChatRoom(activePassHash);
-          return;
         }
 
-        // TRƯỜNG HỢP 2: Đã có dữ liệu -> Lấy passHash từ tin nhắn đầu tiên trong database ra để so sánh
-        let firstKey = Object.keys(data)[0];
-        let correctHashFromDB = data[firstKey].passHash;
-
-        if (tempHash !== correctHashFromDB) {
-          errorMsg.innerText = "❌ Sai mật khẩu rồi! Không thể truy cập.";
-          errorMsg.style.display = "block";
-          return;
-        }
-
-        activePassHash = correctHashFromDB;
-        enterChatRoom(activePassHash);
-
+        enterChatRoom(correctHash);
       } catch (err) {
         btn.innerText = "Mở khoá";
         btn.disabled = false;
@@ -188,13 +181,13 @@
     async function sendMessage() {
       const input = document.getElementById("message-input");
       const text = input.value.trim();
-      if (text !== "" && activePassHash) {
+      if (text !== "") {
         try {
           await push(chatsRef, {
             sender: senderId,
             senderName: senderName,
             text: text,
-            passHash: activePassHash,
+            passHash: correctHash,
             timestamp: Date.now()
           });
           input.value = "";
