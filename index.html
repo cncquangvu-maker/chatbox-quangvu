@@ -61,6 +61,15 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
   <script type="module">
+    // Đoạn mã quét và tự động xóa bỏ bất kỳ nút tạo mật khẩu nào còn sót lại do cache
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll("button").forEach(btn => {
+        if (btn.innerText.includes("tạo mật khẩu") || btn.innerText.includes("chủ phòng")) {
+          btn.remove();
+        }
+      });
+    });
+
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, get, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
