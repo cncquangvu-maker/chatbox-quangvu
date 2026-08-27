@@ -72,6 +72,9 @@
     </div>
   </div>
 
+  <!-- Thư viện mã hóa CryptoJS chuẩn xác -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, get, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -102,21 +105,13 @@
       localStorage.setItem("chat_user_name", senderName);
     }
 
-    // Hàm mã hóa mật khẩu chuẩn bảo mật cao cấp (SHA-256 nội bộ trình duyệt)
-    async function hashPassword(plainText) {
-      const msgBuffer = new TextEncoder().encode(plainText);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
     document.getElementById("btn-login").addEventListener("click", checkPassword);
     document.getElementById("btn-create").addEventListener("click", createPassword);
     document.getElementById("password-input").addEventListener("keypress", (e) => { if(e.key === 'Enter') checkPassword(); });
     document.getElementById("btn-send").addEventListener("click", sendMessage);
     document.getElementById("message-input").addEventListener("keypress", (e) => { if(e.key === 'Enter') sendMessage(); });
 
-    // ĐĂNG NHẬP (Đã mã hóa)
+    // ĐĂNG NHẬP
     async function checkPassword() {
       const errorMsg = document.getElementById("error-msg");
       const successMsg = document.getElementById("success-msg");
@@ -132,7 +127,7 @@
         return;
       }
 
-      const tempHash = await hashPassword(inputPass);
+      const tempHash = CryptoJS.SHA256(inputPass).toString().toLowerCase();
 
       try {
         const snapshot = await get(chatsRef);
@@ -163,7 +158,7 @@
       }
     }
 
-    // TẠO MẬT KHẨU MỚI (Đã mã hóa)
+    // TẠO MẬT KHẨU MỚI
     async function createPassword() {
       const errorMsg = document.getElementById("error-msg");
       const successMsg = document.getElementById("success-msg");
@@ -179,7 +174,7 @@
         return;
       }
 
-      const tempHash = await hashPassword(inputPass);
+      const tempHash = CryptoJS.SHA256(inputPass).toString().toLowerCase();
 
       try {
         await push(chatsRef, {
