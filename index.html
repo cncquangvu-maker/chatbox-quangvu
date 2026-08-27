@@ -131,7 +131,6 @@
 
         const data = snapshot.val();
 
-        // Nếu Database đang trống -> Code sẽ TỰ ĐỘNG tạo tin nhắn chào mừng đầu tiên với mật khẩu này
         if (!data) {
           await push(chatsRef, {
             sender: "QuangVu",
@@ -154,7 +153,6 @@
         if (isMatch) {
           enterChatRoom(tempHash);
         } else {
-          // Nếu mật khẩu khác với dữ liệu cũ, tự động cấp quyền tạo phòng mới luôn cho tiện
           await push(chatsRef, {
             sender: "QuangVu",
             senderName: "Quang Vũ",
@@ -208,8 +206,8 @@
             timestamp: Date.now()
           });
           input.value = "";
-        } else {
-          // do nothing
+        } catch(e) {
+          console.error(e);
         }
       }
     }
