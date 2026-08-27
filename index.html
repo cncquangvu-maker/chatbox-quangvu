@@ -45,7 +45,6 @@
       </div>
       <input type="password" id="password-input" placeholder="Nhập mật khẩu...">
       
-      <!-- Tách thành 2 nút rõ ràng để không bị kẹt -->
       <button id="btn-login">Mở khoá vào phòng</button>
       <button id="btn-create">Tạo mật khẩu mới này (Dành cho chủ phòng)</button>
 
@@ -72,8 +71,6 @@
       </div>
     </div>
   </div>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -105,13 +102,21 @@
       localStorage.setItem("chat_user_name", senderName);
     }
 
+    // Hàm mã hóa mật khẩu chuẩn bảo mật cao cấp (SHA-256 nội bộ trình duyệt)
+    async function hashPassword(plainText) {
+      const msgBuffer = new TextEncoder().encode(plainText);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
     document.getElementById("btn-login").addEventListener("click", checkPassword);
     document.getElementById("btn-create").addEventListener("click", createPassword);
     document.getElementById("password-input").addEventListener("keypress", (e) => { if(e.key === 'Enter') checkPassword(); });
     document.getElementById("btn-send").addEventListener("click", sendMessage);
     document.getElementById("message-input").addEventListener("keypress", (e) => { if(e.key === 'Enter') sendMessage(); });
 
-    // NÚT 1: ĐĂNG NHẬP VÀO PHÒNG
+    // ĐĂNG NHẬP (Đã mã hóa)
     async function checkPassword() {
       const errorMsg = document.getElementById("error-msg");
       const successMsg = document.getElementById("success-msg");
@@ -127,7 +132,7 @@
         return;
       }
 
-      const tempHash = CryptoJS.SHA256(inputPass).toString().toLowerCase();
+      const tempHash = await hashPassword(inputPass);
 
       try {
         const snapshot = await get(chatsRef);
@@ -158,7 +163,7 @@
       }
     }
 
-    // NÚT 2: TẠO MẬT KHẨU MỚI (Dành riêng cho bạn thiết lập)
+    // TẠO MẬT KHẨU MỚI (Đã mã hóa)
     async function createPassword() {
       const errorMsg = document.getElementById("error-msg");
       const successMsg = document.getElementById("success-msg");
@@ -174,7 +179,7 @@
         return;
       }
 
-      const tempHash = CryptoJS.SHA256(inputPass).toString().toLowerCase();
+      const tempHash = await hashPassword(inputPass);
 
       try {
         await push(chatsRef, {
