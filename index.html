@@ -45,7 +45,7 @@
       <input type="password" id="password-input" placeholder="Nhập mật khẩu..." onkeypress="handlePassEnter(event)">
       <button onclick="checkPassword()">Mở khoá</button>
       
-      <p id="error-msg" style="color: #fa3e3e; margin-top: 10px; font-size: 14px; text-align: center; display: none;">Mật khẩu chưa chính xác!</p>
+      <p id="error-msg" style="color: #fa3e3e; margin-top: 10px; font-size: 14px; text-align: center; display: none;"></p>
 
       <div class="note-box">
         <p style="margin-bottom: 8px;"><strong>🔒 Lời nhắn từ Quang Vũ:</strong></p>
@@ -101,7 +101,6 @@
 
     function checkPassword() {
       let inputPass = document.getElementById("password-input").value;
-      // Tự động xóa khoảng trắng thừa ở đầu/cuối/giữa các ký tự
       inputPass = inputPass.trim().replace(/\s+/g, '').toLowerCase();
 
       const errorMsg = document.getElementById("error-msg");
@@ -113,19 +112,28 @@
         return;
       }
 
-      // Mã hóa chuỗi SHA-256
+      // Mã hóa SHA-256 từ ô nhập
       const tempHash = CryptoJS.SHA256(inputPass).toString();
 
-      // Kiểm tra xem mã hash đã tồn tại tin nhắn nào trên Firebase chưa
-      db.orderByChild("passHash").equalTo(tempHash).once("value", (snapshot) => {
-        if (snapshot.exists()) {
-          // Đúng mật khẩu ➔ Mở chat
+      // Đọc toàn bộ danh sách nút dưới "chats" để kiểm tra passHash
+      db.once("value", (snapshot) => {
+        const data = snapshot.val();
+        let isMatch = false;
+
+        if (data) {
+          Object.keys(data).forEach(key => {
+            if (data[key] && data[key].passHash === tempHash) {
+              isMatch = true;
+            }
+          });
+        }
+
+        if (isMatch) {
           hashedPass = tempHash;
           document.getElementById("login-screen").classList.add("hidden");
           document.getElementById("chat-screen").classList.remove("hidden");
           initChat();
         } else {
-          // Sai mật khẩu ➔ Báo lỗi chữ đỏ
           errorMsg.innerText = "Mật khẩu chưa chính xác! Vui lòng thử lại.";
           errorMsg.style.display = "block";
         }
@@ -139,12 +147,15 @@
       const box = document.getElementById("chat-box");
       box.innerHTML = "";
 
-      db.orderByChild("passHash").equalTo(hashedPass).on("child_added", (snapshot) => {
+      db.on("child_added", (snapshot) => {
         const msgId = snapshot.key;
         const data = snapshot.val();
         
-        if (!document.getElementById(msgId)) {
-          displayMessage(msgId, data.text, data.senderName || "Ẩn danh", data.sender === senderId ? "me" : "them");
+        // Chỉ hiển thị tin nhắn thuộc về mã mật khẩu này và có nội dung văn bản
+        if (data && data.passHash === hashedPass && data.text) {
+          if (!document.getElementById(msgId)) {
+            displayMessage(msgId, data.text, data.senderName || "Ẩn danh", data.sender === senderId ? "me" : "them");
+          }
         }
       });
     }
